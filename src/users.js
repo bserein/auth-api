@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken') // when we downloaded the jsonwebtoken for the api
 const { connectDb } = require('./dbConnect')
 
 exports.createUser = (req, res) => {
@@ -27,10 +28,11 @@ exports.createUser = (req, res) => {
             userRole: newUser.userRole
         }
         // TODO: create a JWT and send back the token
+        const token = jwt.sign(user, 'doNotShareYourSecret') //protect this secret
         res.status(201).send({
         success: true,
         message: "Acccount Created",
-        token: user, //add this to token later
+        token 
       })
     })
     .catch((err) => res.status(500).send({ 
@@ -70,10 +72,11 @@ exports.loginUser = (req, res) => {
                     user.password = undefined
                     return user
                 })
+                const token = jwt.sign(users[0], 'doNotShareYourSecret')
                 res.send({
                     success: true,
                     message: "Login Sucessful",
-                    token: users[0]
+                    token
                 })
             })
             .catch(
@@ -82,12 +85,29 @@ exports.loginUser = (req, res) => {
                 message: err.message,
                 error: err
               }))
-
 }
 
-exports.getUsers = (req, res) => { //TODO protect this with JWT
+exports.getUsers = (req, res) => { 
+    //first make sure the user sent the authorization token 
+    if(!req.headers.authorization) {
+        return res.status(403).send({
+            success: false,
+            message: "No Authorization token found"
+        })
+    }
+
+    //TODO protect this with JWT
+    const decode = jwt.verify(req.headers.authorization, 'doNotShareYourSecret')
+    console.log('NEW REQUEST BY:', decode.email)
+    if(decode.userRole > 5) {
+        return res.status(401).send({
+            success: false,
+            message: 'NOT AUTHORIZED'
+        })
+    }
     const db = connectDb()
-    db.collection('users').get()
+    db.collection('users')
+    .get()
     .then(snapshot => {
         const users = snapshot.docs.map(doc => {
             let user = doc.data()

@@ -7,9 +7,11 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
-app.post('/user',createUser)
-app.post('/user/login', loginUser)
-app.get('/user/', getUsers)
+
+app.post('/users',createUser)
+app.post('/users/login', loginUser)
+app.get('/users/', getUsers)
+
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}...`)
