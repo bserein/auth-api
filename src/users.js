@@ -4,7 +4,10 @@ exports.createUser = (req, res) => {
     //first, do some validation... (email and password)
     if(!req.body || !req.body.email || !req.body.password) {
         // if no request for email, password or body its an invalid request
-        res.status(400).send('Invalid Request')
+        res.status(400).send({
+            success: false,
+            message: "Invalid Request"
+        })
         return
     }
     const newUser = {
@@ -26,7 +29,7 @@ exports.createUser = (req, res) => {
         // TODO: create a JWT and send back the token
         res.status(201).send({
         success: true,
-        message: "Acccount created",
+        message: "Acccount Created",
         token: user, //add this to token later
       })
     })
@@ -41,7 +44,10 @@ exports.loginUser = (req, res) => {
    //first, do some validation... (email and password) //you copy like above but you can create a function that will do the same 
      if(!req.body || !req.body.email || !req.body.password) {
          // Invalid Request
-        res.status(400).send('Invalid Request')
+        res.status(400).send({
+            success: false,
+            message: "Invalid Request"
+          })
         return
       }
       const db = connectDb();
@@ -78,3 +84,27 @@ exports.loginUser = (req, res) => {
               }))
 
 }
+
+exports.getUsers = (req, res) => { //TODO protect this with JWT
+    const db = connectDb()
+    db.collection('users').get()
+    .then(snapshot => {
+        const users = snapshot.docs.map(doc => {
+            let user = doc.data()
+            user.id = doc.id
+            user.password = undefined //removed the password so that it isnt returned back
+            return user
+        })
+        res.send({
+            success: true,
+            message: "Users Returned",
+            users
+         })
+    })
+    .catch(
+        (err) => res.status(500).send({ 
+        success: false,
+        message: err.message,
+        error: err
+      }))
+} 
